@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:torznab="http://torznab.com/schemas/2015/feed">
+<channel>
+<title>torznab indexer</title>
+<description>API results</description>
+<!-- offset is the current offset of the response
+     total is the total number of items found by the query
+     Sun, 06 Jun 2010 17:29:23 +0100
+ -->
+{% for item in items %}
+<item>
+  <title>{{ item.title }}</title>
+  <guid isPermaLink="true">{{ item.permlink }}</guid>
+  <link>{{ item.magnet }}</link>
+  <comments>{{ item.permlink }}</comments>
+  <pubDate>{{ item.date }}</pubDate>
+  <category>TV > XviD</category>
+  <enclosure url="{{ item.magnet }}" length="{{ item.size }}" type="application/x-bittorrent;x-scheme-handler/magnet" />
+  <torznab:attr name="seeders" value="{{ item.seeders }}" />
+  <torznab:attr name="leechers" value="{{ item.peers }}" />
+</item>
+{% endfor %}
+</channel>
+</rss>
