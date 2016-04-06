@@ -5,7 +5,7 @@ import re
 
 class PirateBay(Base):
     url = 'https://thepiratebay.se/%s'
-    new_shows_qs = 'browse/205/0/3/0'
+    new_shows_qs = 'tv/latest/'
     search_qs = 'search/%s/0/99/205'
     elem_path = '//*[@id="searchResult"]/tr[*]'
     r_date = re.compile('(?:(?i)Uploaded (\d\d)\-(\d\d).(\d\d):(\d\d),)')
@@ -34,11 +34,11 @@ class PirateBay(Base):
         else:
             if not request.GET.get('rid'):
                 #   we need to handle query without params 'q' and 'rid'
-                #   it is required by sonarr test
+                #   it is required by Sonarr test and for RSS checks
                 elements = self.get_new_shows()
             else:
                 #   it's important to return empty list if query is via 'rid' as we don't support it
-                #   sonarr will do another request, this time with string query 'q'
+                #   Sonarr will do another request, this time with string query 'q'
                 elements = []
 
         return elements
