@@ -10,7 +10,7 @@ class EZTV(Base):
     max_cache_age = 21600 #6hours
     cache_updated = 0
     shows_dict = {}
-    fake_seeders = True
+    fake_seeders = False
 
     def __init__(self):
         self._ref_cache()
@@ -139,9 +139,16 @@ class EZTV(Base):
                     res_d['magnet'] = cells[2].cssselect('a[class=magnet]')[0].values()[0]
                     res_d['size'] = self._size_to_bytes(cells[3].text)
                     res_d['date'] = self._age_to_date(cells[4].text)
+                    seeders = cells[5].xpath('font')
+                    if seeders:
+                        seeders = seeders[0].text
+                    else:
+                        seeders = 0
+                    res_d['seeders'] = seeders
+                    res_d['peers'] = seeders
                     if self.fake_seeders:
-                        #EZTV doesn't offer seeder/peer data, even though the torrents are heavily shared.
-                        #Faking the seeders allows sonarr to prioritize by file size
+                        #EZTV didn't offer seeder/peer data in the past, even though the torrents 
+                        #are heavily shared.Faking the seeders allows sonarr to prioritize by file size
                         #Formula is basically 1 fake seeder per 1 MB
                         res_d['seeders'] = res_d['size'] / 1024 / 1024 / 10
                         res_d['peers'] = res_d['seeders']
