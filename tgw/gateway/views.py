@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from providers import piratebay
+from providers import eztv
 
 
 class Endpoints:
     piratebay = 'tpb'
+    eztv = 'eztv'
 
 
 def index(request):
@@ -11,7 +13,8 @@ def index(request):
         return render(request, 'gateway/caps.html', {}, content_type='application/rss+xml')
 
     enabled_providers = {
-        Endpoints.piratebay: piratebay.PirateBay()
+        Endpoints.piratebay: piratebay.PirateBay(),
+        Endpoints.eztv: eztv.EZTV()
     }
 
     elements = []

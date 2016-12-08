@@ -98,7 +98,8 @@ class PirateBay(Base):
         return 0
 
 
-if __name__ == '_main__':
+if __name__ == '__main__':
     tpb = PirateBay()
     res = tpb.get_search('Arrow')
-
+    #import json
+    #print(json.dumps(res,indent=4))
