@@ -3,7 +3,7 @@ import time
 from base import Base
 
 class EZTV(Base):
-    url = 'http://eztv.ag/%s'
+    url = 'https://eztv.ag/%s'
     search_qs = 'search/?q1={search}&q2={id}&search=Search'
     elem_path = '//table[@class="forum_header_border"]/tr'
     show_id = ''
@@ -16,15 +16,18 @@ class EZTV(Base):
         self._ref_cache()
 
     def _ref_cache(self):
-        show_list_elem_path = '//select[@class="tv-show-search-select"]/option'
-        shows_html_opts = self.get_items('', show_list_elem_path)
-        for o in shows_html_opts:
-            t=o.text.encode('ascii','replace')
+        show_list_elem_path = '//table[@class="forum_header_border"]/tr/td/a[@class="thread_link"]'
+        shows_html_links = self.get_items('/showlist/', show_list_elem_path)
+        for a in shows_html_links:
+            if a.text:
+                t=a.text.encode('ascii','replace')
+            else:
+                continue
             #Strip out Years
             sname = ''.join(re.split('\([0-9]{4,4}\)',t))
             #Strip off the "The" portion of show names
             if ', The' in sname:
-                m = re.search(', The ',sname)
+                m = re.search(', The',sname)
                 sname = ''.join([ sname[:m.start()], sname[m.end():] ])
             #Strip out other parenthesised bits for generic show names.
             sname = ''.join(re.split('\([A-Z &]+\)',sname))
@@ -32,7 +35,7 @@ class EZTV(Base):
             sname = re.sub(r"[,\.']","",sname)
             #Strip remaining whitespace and lower case the show names
             sname = sname.strip().lower()
-            self.shows_dict[sname] = o.attrib['value']
+            self.shows_dict[sname] = a.attrib['href'].split('/')[2]
         self.cache_updated = time.time()
 
     def _age_to_date(self, age):
@@ -48,10 +51,10 @@ class EZTV(Base):
             }
         #Create datetime format
         datetime_format = '%a, %d %b %Y %H:%M:00 %z'
-        
+
         cur_num=0
         tdelay_args={}
-        
+
         #Clean up some shortened time units
         age = age.replace('h',' hours')
         age = age.replace('d',' days')
@@ -94,6 +97,7 @@ class EZTV(Base):
         return size_bytes
 
     def get_search(self, show_title='', title_filter=''):
+        #print("Searching for show_title: {} and title_filter: {}".format(show_title,title_filter))
         search_params={
             'id': '',
             'search': ''
@@ -107,11 +111,15 @@ class EZTV(Base):
         if show_title:
             try:
                 search_params['id'] = self.shows_dict[show_title.lower()]
+                #print("Found Show id in Cache with id: {}".format(search_params['id']))
             except KeyError:
+                #print("Doing a text search")
                 search_params['search'] = show_title
 
         items = self.get_items(self.search_qs.format(**search_params), self.elem_path)
+        #print("Searching at URI: {}".format(self.search_qs.format(**search_params)))
         shows = self.parse_items(items, title_filter)
+        #print("Shows returned: {}".format(len(shows)))
         #If EZTV doesn't find anything for a text search, it return 'latest'
         #which are garbage for our purpose. So only count shows that actually
         #have the text for what was searched for contained in the title.
@@ -121,9 +129,11 @@ class EZTV(Base):
                 if show_title.lower() in s['title'].lower():
                     real_matches.append(s)
             shows = real_matches
+        #import json
+        #print("Shows found: {}".format(json.dumps(shows,indent=4)))
         return shows
 
-    def parse_items(self, items, title_filter=''): 
+    def parse_items(self, items, title_filter=''):
         results = []
 
         for e in items:
@@ -141,13 +151,13 @@ class EZTV(Base):
                     res_d['date'] = self._age_to_date(cells[4].text)
                     seeders = cells[5].xpath('font')
                     if seeders:
-                        seeders = seeders[0].text
+                        seeders = seeders[0].text.replace(',','')
                     else:
                         seeders = 0
                     res_d['seeders'] = seeders
                     res_d['peers'] = seeders
                     if self.fake_seeders:
-                        #EZTV didn't offer seeder/peer data in the past, even though the torrents 
+                        #EZTV didn't offer seeder/peer data in the past, even though the torrents
                         #are heavily shared.Faking the seeders allows sonarr to prioritize by file size
                         #Formula is basically 1 fake seeder per 1 MB
                         res_d['seeders'] = res_d['size'] / 1024 / 1024 / 10
