@@ -189,6 +189,11 @@ class EZTV(Base):
 
 if __name__ == '__main__':
     import json
+    import sys
+    if len(sys.argv) > 1:
+        shw = sys.argv[1]
+    else:
+        shw = "Arrow"
     ezt = EZTV()
-    res = ezt.get_search('Arrow')
+    res = ezt.get_search(shw)
     print(json.dumps(res,indent=4))
